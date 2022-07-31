@@ -1,0 +1,243 @@
+#データの読み込み
+DF <- read.table("covid19_tokyo_daily_last_modified.csv", 
+                 sep = ",", 
+                 header = TRUE, 
+                 stringsAsFactors = FALSE, 
+                 fileEncoding="UTF-8-BOM")
+head(DF)
+
+#日付データに変換したDFdateを作成
+DFdate <- DF
+DFdate[, 1] <- as.Date(DF[, 1], 
+                       "%Y/%m/%d")
+
+head(DFdate)
+
+#感染者数の増加前日比の時系列データを比較
+library(scales)
+library(ggplot2)
+ggplot(DFdate) +
+  geom_line(aes(x=日付, 
+                y=感染者数の増加前日比, 
+                group=1), 
+            colour="blue",
+            alpha=0.5) +
+  scale_x_date(breaks = seq(as.Date("2020-1-16"), 
+                            as.Date("2021-6-27"), 
+                            by="1 month"), 
+               labels=date_format("%m")) +
+  labs(x="月")
+
+#感染者数の増加前日比/(ラグ変数 + 5)の時系列データを比較
+ggplot(DFdate) +
+  geom_line(aes(x=日付, 
+                y=感染者数の増加前日比 / (ラグ変数 + 5), 
+                group=1), 
+            colour="blue",
+            alpha=0.5) +
+  scale_x_date(breaks = seq(as.Date("2020-1-16"), 
+                            as.Date("2021-6-27"), 
+                            by="1 month"), 
+               labels=date_format("%m")) +
+  labs(x="月")
+
+#lm1にラグ変数を説明変数として加える
+#線形回帰モデルの作成lm3
+lm3 <- lm(感染者数1日 ~ ラグ変数 + 週の前半後半1 + 
+                平均気温, data = DF)
+summary(lm3)
+
+#分散分析（ほんとに差があるのか）
+AOV3 <- aov(lm3)
+summary(AOV3)
+
+#AIC（小さいほど良い）の確認
+AIC(lm0, lm1, lm2, lm3)
+
+#BIC（単純なモデルを良く評価）の確認
+BIC(lm0, lm1, lm2, lm3)
+
+#残差の分布
+par(mfrow=c(2, 2))
+plot(lm3)
+par(mfrow=c(1, 1))
+
+#多重共線性の確認
+library(car)
+vif(lm3)
+
+#標準偏回帰係数の作成
+library(lm.beta)
+LM3 <- lm.beta(lm3)
+summary(LM3)
+
+
+
+
+
+
+#lm1にラグ変数とラグ変数*週の前半後半1
+#を説明変数として加える
+#線形回帰モデルの作成lm4
+lm4 <- lm(感染者数1日 ~ 週の前半後半1 + 平均気温 + 
+                ラグ変数 + ラグ変数*週の前半後半1, 
+              data = DF)
+summary(lm4)
+
+#分散分析（ほんとに差があるのか）
+AOV4 <- aov(lm4)
+summary(AOV4)
+
+#AIC（小さいほど良い）の確認
+AIC(lm0, lm1, lm2, lm3, lm4)
+
+#BIC（単純なモデルを良く評価）の確認
+BIC(lm0, lm1, lm2, lm3, lm4)
+
+#残差の分布
+par(mfrow=c(2, 2))
+plot(lm4)
+par(mfrow=c(1, 1))
+
+#多重共線性の確認
+library(car)
+vif(lm4)
+
+#標準偏回帰係数の作成
+library(lm.beta)
+LM4 <- lm.beta(lm4)
+summary(LM4)
+
+
+
+
+
+
+#lm1にラグ変数とラグ変数*週の前半後半1とI(ラグ変数^2)と
+#I(ラグ変数^2)*週の前半後半1を説明変数として加える
+#線形回帰モデルの作成lm5
+lm5 <- lm(感染者数1日 ~ 週の前半後半1 + 平均気温 + 
+                ラグ変数 +  + ラグ変数*週の前半後半1 + 
+                I(ラグ変数^2) + 
+                I(ラグ変数^2)*週の前半後半1 , 
+              data = DF)
+summary(lm5)
+
+#分散分析（ほんとに差があるのか）
+AOV5 <- aov(lm5)
+summary(AOV5)
+
+#AIC（小さいほど良い）の確認
+AIC(lm0, lm1, lm2, lm3, lm4, lm5)
+
+#BIC（単純なモデルを良く評価）の確認
+BIC(lm0, lm1, lm2, lm3, lm4, lm5)
+
+#残差の分布
+par(mfrow=c(2, 2))
+plot(lm5)
+par(mfrow=c(1, 1))
+
+#多重共線性の確認
+#10以上のものがある
+library(car)
+vif(lm5)
+
+#標準偏回帰係数の作成
+library(lm.beta)
+LM5 <- lm.beta(lm5)
+summary(LM5)
+
+
+
+
+
+
+
+#lm1にラグ変数とラグ変数*週の前半後半1と
+#I(ラグ変数^2)を説明変数として加える
+#線形回帰モデルの作成lm6
+lm6 <- lm(感染者数1日 ~ 週の前半後半1 +平均気温 + 
+                ラグ変数 + ラグ変数*週の前半後半1 + 
+                I(ラグ変数^2), 
+              data = DF)
+summary(lm6)
+
+#分散分析（ほんとに差があるのか）
+AOV6 <- aov(lm6)
+summary(AOV6)
+
+#AIC（小さいほど良い）の確認
+AIC(lm0, lm1, lm2, lm3, lm4, lm5, lm6)
+
+#BIC（単純なモデルを良く評価）
+BIC(lm0, lm1, lm2, lm3, lm4, lm5, lm6)
+
+#残差の分布
+par(mfrow=c(2, 2))
+plot(lm6)
+par(mfrow=c(1, 1))
+
+#多重共線性の確認
+library(car)
+vif(lm6)
+
+#標準偏回帰係数の作成
+library(lm.beta)
+LM6 <- lm.beta(lm6)
+summary(LM6)
+
+
+
+
+#lm1にラグ変数とI(ラグ変数^2)を説明変数として加える
+#線形回帰モデルの作成lm7
+lm7 <- lm(感染者数1日 ~ 週の前半後半1 + 平均気温 + 
+                ラグ変数 +I(ラグ変数^2), 
+              data = DF)
+summary(lm7)
+
+#分散分析（ほんとに差があるのか）
+AOV7 <- aov(lm7)
+summary(AOV7)
+
+#オーバーフィッテイングの確認AIC（小さいほど良い）
+AIC(lm0, lm1, lm2, lm3, lm4, lm5, lm6, lm7)
+
+#BIC（単純なモデルを良く評価）
+BIC(lm0, lm1, lm2, lm3, lm4, lm5, lm6, lm7)
+
+#残差の分布
+par(mfrow=c(2, 2))
+plot(lm7)
+par(mfrow=c(1, 1))
+
+#多重共線性の確認
+library(car)
+vif(lm7)
+
+#標準偏回帰係数の作成
+library(lm.beta)
+LM7 <- lm.beta(lm7)
+summary(LM7)
+
+
+
+#lm4, lm5, lm6, lm7でにおいて交差項や
+#二乗項を入れた理由は、
+#疫学モデルによると、
+#感染パラメータと感受性人口と感染性人口の積が
+#新規感染者数になり、
+#感受性人口と、感染性人口は、
+#前日の新規感染者数の影響を受けるからである。
+
+#平均気温は急激に変化するわけではなく、徐々に変化する
+#そのため、感染者数1日とラグ変数の交絡変数と考えられる
+#lm3, lm4, lm5, lm6, lm7の中で、残差の分布に大きな違いはなく、
+#AIC, BICはlm5が優れており、有意差検定においては、
+#単項のみを加えたlm3は平均気温が有意ではない。
+#lm5は多重共線性の問題が生じている。
+#今回は感染性パラメータを求めるというよりは
+#新規感染者数の前日比の増加の原因を探ることに主軸を
+#置くことにする。そのため、シンプルな構造となっている
+#lm3を採用する
